@@ -1,73 +1,72 @@
-const form = document.querySelector("#form");
-      const productList = document.querySelector("#productList");
-      const total = document.querySelector("#total");
+onStart();
+var amount = document.getElementById('amt');
+var description = document.getElementById('desc');
+var category = document.getElementById('category');
+let btn = document.getElementById('submit');
+let display = document.getElementById('display');
+btn.addEventListener('click', addExpense);
 
-      form.addEventListener("submit", async (e) => {
-        try {
-          e.preventDefault();
-          const productName = document.querySelector("#productName").value;
-          const sellingPrice = document.querySelector("#sellingPrice").value;
-          const product = { productName, sellingPrice };
-          await axios.post(
-            "https://crudcrud.com/api/4ed6bd35c06049f59a4d7a8bca948529/products",
-            product
-          );
-          updateProductList();
-          updateTotal();
-          form.reset();
-        } catch (error) {
-          console.error(error);
+
+async function onStart() {
+    try{
+        let res  = await axios.get('http://localhost:3000/data')
+       
+        for (let i = 0; i < res.data.length; i++) {
+            let id = res.data[i].id;
+            let exp = `${res.data[i].amount}-${res.data[i].description}-${res.data[i].category}`;
+            displayOnScreen(id, exp)
         }
-      });
+    }
+    catch(err){
+        console.log(err)
+    }
 
-      const deleteProduct = async (id) => {
-        try {
-          await axios.delete(
-            `https://crudcrud.com/api/4ed6bd35c06049f59a4d7a8bca948529/products/${id}`
-          );
-          updateProductList();
-          updateTotal();
-        } catch (error) {
-          console.error(error);
-        }
-      };
+}
 
-      const updateProductList = async () => {
-        try {
-          const res = await axios.get(
-            "https://crudcrud.com/api/4ed6bd35c06049f59a4d7a8bca948529/products"
-          );
-          productList.innerHTML = "";
-          res.data.forEach((product, i) => {
-            const item = document.createElement("li");
-            item.innerHTML = `${product.productName} - Rs.${product.sellingPrice} `;
-            const deleteBtn = document.createElement("button");
-            deleteBtn.innerHTML = "Delete";
-            deleteBtn.addEventListener("click", () => {
-              deleteProduct(product._id);
-            });
-            item.appendChild(deleteBtn);
-            productList.appendChild(item);
-          });
-        } catch (error) {
-          console.error(error);
-        }
-      };
 
-      const updateTotal = async () => {
-        try {
-          const res = await axios.get(
-            "https://crudcrud.com/api/4ed6bd35c06049f59a4d7a8bca948529/products"
-          );
-          let sum = 0;
-          res.data.forEach((product) => {
-            sum += parseInt(product.sellingPrice);
-          });
-          total.innerHTML = "Rs." + sum;
-        } catch (error) {
-          console.error(error);
-        }
-      };
+async function addExpense(e) {
+    e.preventDefault();
+    try{
+        if(amount.value==''||description.value=='') return false;
 
-      updateProductList();
-      updateTotal();
+        let obj = {
+            amount: amount.value,
+            description: description.value,
+            category: category.value
+        };
+        let exp = `${amount.value}  -  ${description.value}  -  ${category.value}`;
+    
+        const id= await axios.post('http://localhost:3000/', obj)
+        displayOnScreen(id, exp);
+    }
+
+    catch(err){
+        console.log(err);
+    }
+
+}
+
+
+function displayOnScreen(id, expense) {
+    let p = `<li id="${id}" style="list-style:none;display:block;height:40px">${expense} <div style="float:right"> 
+            <button class="btn btn-secondary btn-sm" style="border-radius:20px; margin-right:10px" onClick="deleteExpense('${id}')">Delete Expense</button>
+            </div></li>`;
+    display.innerHTML = display.innerHTML + p;
+}
+
+
+function deleteExpense(id) {
+    try{
+        let elementToRemove = document.getElementById(id);
+        elementToRemove.remove();
+        return axios.get(`http://localhost:3000/delete/${id}`)
+    }
+
+    catch(err){
+     console.log(err)
+    }
+
+}
+
+  
+  
